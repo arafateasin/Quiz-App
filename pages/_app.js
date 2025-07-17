@@ -6,11 +6,11 @@ import { MetaMaskConnector } from "wagmi/connectors/metaMask";
 import { CoinbaseWalletConnector } from "wagmi/connectors/coinbaseWallet";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-// zkSync Sepolia Testnet configuration
-const zkSyncSepolia = {
-  id: 300,
-  name: "zkSync Sepolia Testnet",
-  network: "zksync-sepolia",
+// Local Hardhat network configuration
+const localHardhat = {
+  id: 31337,
+  name: "Localhost",
+  network: "localhost",
   nativeCurrency: {
     decimals: 18,
     name: "Ether",
@@ -18,23 +18,23 @@ const zkSyncSepolia = {
   },
   rpcUrls: {
     default: {
-      http: ["https://sepolia.era.zksync.dev"],
+      http: ["http://127.0.0.1:8545"],
     },
     public: {
-      http: ["https://sepolia.era.zksync.dev"],
+      http: ["http://127.0.0.1:8545"],
     },
   },
   blockExplorers: {
     default: {
-      name: "zkSync Sepolia Explorer",
-      url: "https://sepolia.explorer.zksync.io",
+      name: "Local Explorer",
+      url: "http://localhost:8545",
     },
   },
   testnet: true,
 };
 
 const { chains, publicClient } = configureChains(
-  [zkSyncSepolia],
+  [localHardhat],
   [publicProvider()]
 );
 

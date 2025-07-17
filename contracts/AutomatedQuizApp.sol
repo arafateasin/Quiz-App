@@ -56,6 +56,7 @@ contract AutomatedQuizApp is ReentrancyGuard, Pausable, Ownable {
     mapping(uint256 => mapping(address => UserAnswer)) public userAnswers;
     mapping(address => PlayerStats) public playerStats;
     mapping(uint256 => QuestionTemplate) public questionPool;
+    mapping(uint256 => address[]) public questionParticipants; // Track participants per question
     
     uint256 public currentQuestionId;
     uint256 public constant QUESTION_DURATION = 30 seconds;
@@ -214,11 +215,29 @@ contract AutomatedQuizApp is ReentrancyGuard, Pausable, Ownable {
                 questions[currentQuestionId].isActive && 
                 !questions[currentQuestionId].isRevealed &&
                 block.timestamp > questions[currentQuestionId].endTime) {
-                _revealAnswer(currentQuestionId);
+                _revealAnswerAndDistributeRewards(currentQuestionId);
             }
             
             // Create next question
             _createNextQuestion();
+        }
+    }
+    
+    // Auto-trigger function that can be called by anyone to keep the quiz running
+    function autoTrigger() external {
+        if (autoMode && poolSize > 0) {
+            // Auto-reveal current question if time is up
+            if (currentQuestionId < totalQuestionsCount && 
+                questions[currentQuestionId].isActive && 
+                !questions[currentQuestionId].isRevealed &&
+                block.timestamp > questions[currentQuestionId].endTime) {
+                _revealAnswerAndDistributeRewards(currentQuestionId);
+            }
+            
+            // Auto-create next question if enough time has passed
+            if (block.timestamp >= lastQuestionTime + QUESTION_DURATION) {
+                _createNextQuestion();
+            }
         }
     }
     
@@ -266,6 +285,9 @@ contract AutomatedQuizApp is ReentrancyGuard, Pausable, Ownable {
             isCorrect: false // Will be set when question is revealed
         });
         
+        // Track participant for automatic reward distribution
+        questionParticipants[questionId].push(msg.sender);
+        
         questions[questionId].totalParticipants++;
         
         // Update player stats
@@ -280,15 +302,15 @@ contract AutomatedQuizApp is ReentrancyGuard, Pausable, Ownable {
         emit AnswerSubmitted(questionId, msg.sender, answerIndex);
     }
     
-    function _revealAnswer(uint256 questionId) internal {
+    function _revealAnswerAndDistributeRewards(uint256 questionId) internal {
         require(questions[questionId].isActive, "Question is not active");
         require(!questions[questionId].isRevealed, "Answer already revealed");
         
         questions[questionId].isActive = false;
         questions[questionId].isRevealed = true;
         
-        // Process all answers and distribute rewards
-        _processAnswersAndDistributeRewards(questionId);
+        // Process all answers and automatically distribute rewards
+        _processAnswersAndAutoDistributeRewards(questionId);
         
         emit QuestionRevealed(
             questionId,
@@ -298,33 +320,50 @@ contract AutomatedQuizApp is ReentrancyGuard, Pausable, Ownable {
         );
     }
     
-    function _processAnswersAndDistributeRewards(uint256 questionId) internal {
+    function _processAnswersAndAutoDistributeRewards(uint256 questionId) internal {
         Question storage question = questions[questionId];
+        uint256 correctAnswerIndex = question.correctAnswerIndex;
         
-        // We need to iterate through all participants
-        // Since we can't iterate through mappings directly, we'll use events to track participants
-        // For now, we'll implement a simplified reward distribution
+        // Get all participants for this question
+        address[] memory participants = questionParticipants[questionId];
+        uint256 correctCount = 0;
         
-        // This is a simplified approach - in production, you'd want to track participants more efficiently
-        uint256 totalRewardPool = REWARD_AMOUNT;
+        // Process each participant and distribute rewards automatically
+        for (uint256 i = 0; i < participants.length; i++) {
+            address participant = participants[i];
+            
+            if (userAnswers[questionId][participant].hasAnswered &&
+                userAnswers[questionId][participant].answerIndex == correctAnswerIndex) {
+                
+                correctCount++;
+                
+                // Mark as correct
+                userAnswers[questionId][participant].isCorrect = true;
+                
+                // Update player stats
+                playerStats[participant].correctAnswers++;
+                playerStats[participant].totalRewards += REWARD_AMOUNT;
+                playerStats[participant].currentStreak++;
+                
+                if (playerStats[participant].currentStreak > playerStats[participant].bestStreak) {
+                    playerStats[participant].bestStreak = playerStats[participant].currentStreak;
+                }
+                
+                // Automatic token transfer
+                quizToken.transfer(participant, REWARD_AMOUNT);
+                
+                emit RewardDistributed(participant, REWARD_AMOUNT);
+                emit LeaderboardUpdated(participant, playerStats[participant].correctAnswers);
+            } else {
+                // Reset streak for wrong answer
+                playerStats[participant].currentStreak = 0;
+            }
+        }
         
-        // Update question stats
-        question.correctAnswers = _countCorrectAnswers(questionId);
-        
-        emit QuestionRevealed(
-            questionId,
-            question.correctAnswerIndex,
-            question.totalParticipants,
-            question.correctAnswers
-        );
+        question.correctAnswers = correctCount;
     }
     
-    function _countCorrectAnswers(uint256 questionId) internal view returns (uint256) {
-        // This is a placeholder - in a real implementation, you'd track participants
-        // For now, return 0 to avoid compilation errors
-        return 0;
-    }
-    
+    // Enhanced reward claiming with automatic distribution
     function claimReward(uint256 questionId) external nonReentrant {
         require(questions[questionId].isRevealed, "Question not revealed yet");
         require(userAnswers[questionId][msg.sender].hasAnswered, "Did not participate");
@@ -342,7 +381,7 @@ contract AutomatedQuizApp is ReentrancyGuard, Pausable, Ownable {
                 playerStats[msg.sender].bestStreak = playerStats[msg.sender].currentStreak;
             }
             
-            // Transfer reward
+            // Automatic token transfer - no manual claiming needed
             quizToken.transfer(msg.sender, REWARD_AMOUNT);
             
             emit RewardDistributed(msg.sender, REWARD_AMOUNT);
@@ -350,6 +389,40 @@ contract AutomatedQuizApp is ReentrancyGuard, Pausable, Ownable {
         } else {
             // Reset streak for wrong answer
             playerStats[msg.sender].currentStreak = 0;
+            // Mark as processed even if wrong to prevent re-processing
+            userAnswers[questionId][msg.sender].isCorrect = false;
+        }
+    }
+    
+    // Batch reward distribution for automatic processing
+    function distributeRewards(uint256 questionId, address[] calldata participants) external {
+        require(questions[questionId].isRevealed, "Question not revealed yet");
+        require(msg.sender == owner() || autoMode, "Not authorized");
+        
+        for (uint256 i = 0; i < participants.length; i++) {
+            address participant = participants[i];
+            
+            if (userAnswers[questionId][participant].hasAnswered && 
+                !userAnswers[questionId][participant].isCorrect &&
+                userAnswers[questionId][participant].answerIndex == questions[questionId].correctAnswerIndex) {
+                
+                userAnswers[questionId][participant].isCorrect = true;
+                
+                // Update player stats
+                playerStats[participant].correctAnswers++;
+                playerStats[participant].totalRewards += REWARD_AMOUNT;
+                playerStats[participant].currentStreak++;
+                
+                if (playerStats[participant].currentStreak > playerStats[participant].bestStreak) {
+                    playerStats[participant].bestStreak = playerStats[participant].currentStreak;
+                }
+                
+                // Transfer reward
+                quizToken.transfer(participant, REWARD_AMOUNT);
+                
+                emit RewardDistributed(participant, REWARD_AMOUNT);
+                emit LeaderboardUpdated(participant, playerStats[participant].correctAnswers);
+            }
         }
     }
     
@@ -394,17 +467,6 @@ contract AutomatedQuizApp is ReentrancyGuard, Pausable, Ownable {
     
     function isAutoModeEnabled() external view returns (bool) {
         return autoMode;
-    }
-    
-    function getTimeUntilNextQuestion() external view returns (uint256) {
-        if (!autoMode) return 0;
-        
-        uint256 nextQuestionTime = lastQuestionTime + QUESTION_DURATION;
-        if (block.timestamp >= nextQuestionTime) {
-            return 0;
-        }
-        
-        return nextQuestionTime - block.timestamp;
     }
     
     // Emergency functions

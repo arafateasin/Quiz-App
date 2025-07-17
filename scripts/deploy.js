@@ -3,6 +3,10 @@ const { ethers } = require("hardhat");
 async function main() {
   console.log("Deploying Quiz App contracts...");
 
+  // Get the deployer's signer
+  const [deployer] = await ethers.getSigners();
+  console.log("Deploying with account:", deployer.address);
+
   // Deploy QuizToken first (from AutomatedQuizApp.sol)
   const QuizToken = await ethers.getContractFactory(
     "contracts/AutomatedQuizApp.sol:QuizToken"

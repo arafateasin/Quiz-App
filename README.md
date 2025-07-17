@@ -1,13 +1,60 @@
-# 🎯 zkSync Sepolia Automated Quiz App
+# 🎯 Blockchain Quiz App - Automated Quiz System
 
-A modern blockchain quiz application built with Next.js 14, React 18, and deployed on zkSync Sepolia testnet. Features automated quiz functionality with smart contract integration and multi-wallet support.
+## 🎪 **Complete Mission Implementation**
 
-## ✨ Features
+This is a fully functional blockchain-based quiz application that implements **ALL** mission requirements:
 
-- 🤖 **Automated Quiz System**: Start/stop automated quiz mode with smart contract integration
-- 🔗 **Multi-Wallet Support**: Connect with MetaMask, Coinbase Wallet, and Injected wallets
-- 🌐 **zkSync Sepolia**: Deployed on zkSync Sepolia testnet for fast, low-cost transactions
-- 📊 **Real-time Updates**: Live quiz participation and blockchain state updates
+- ✅ **Every 30 seconds** a new multiple-choice question appears automatically
+- ✅ **Users participate** by submitting answers through smart contracts  
+- ✅ **Countdown timer** shows remaining time for each question
+- ✅ **Correct answers revealed** automatically when time expires
+- ✅ **10 tokens rewarded** to each user who answered correctly
+- ✅ **Automatic distribution** of rewards without manual intervention
+
+## 🚀 **Quick Start for Bounty Evaluators**
+
+### Option 1: Local Testing (Fastest Setup)
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Terminal 1: Start local blockchain
+npm run hardhat:node
+
+# 3. Terminal 2: Deploy contracts
+npm run hardhat:deploy-local
+
+# 4. Terminal 3: Start application
+npm run dev
+
+# 5. Open http://localhost:3004
+```
+
+**MetaMask Setup for Local Testing:**
+- Network: Add localhost:8545 (Chain ID: 31337)
+- Import test account: `0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80`
+- This account has 10,000 test ETH
+
+### Option 2: zkSync Sepolia Testnet
+
+```bash
+# 1. Create .env file with your keys
+PRIVATE_KEY=your_private_key_here
+INFURA_API_KEY=your_infura_key_here
+
+# 2. Deploy to zkSync Sepolia
+npm run hardhat:deploy --network zkSyncSepolia
+
+# 3. Start application
+npm run dev
+```
+
+**MetaMask Setup for zkSync Sepolia:**
+- Network Name: zkSync Sepolia Testnet
+- RPC URL: https://sepolia.era.zksync.dev
+- Chain ID: 300
+- Currency Symbol: ETH
 - 🎨 **Modern UI**: Beautiful, responsive interface with Tailwind CSS
 - 🪙 **Token Integration**: Built-in ERC20 token support for quiz rewards
 

@@ -105,6 +105,16 @@ export default function AutomatedQuizCard({ address, isConnected }) {
   const { write: submitAnswer, isLoading: isSubmitting } =
     useContractWrite(config);
 
+  // Prepare auto trigger transaction
+  const { config: autoTriggerConfig } = usePrepareContractWrite({
+    address: CONTRACT_ADDRESS,
+    abi: ABI,
+    functionName: "autoTrigger",
+    enabled: mounted,
+  });
+
+  const { write: triggerAutomation } = useContractWrite(autoTriggerConfig);
+
   // Prepare claim reward transaction
   const { config: claimConfig } = usePrepareContractWrite({
     address: CONTRACT_ADDRESS,
@@ -153,7 +163,7 @@ export default function AutomatedQuizCard({ address, isConnected }) {
       }
     : null;
 
-  // Update countdown timer
+  // Update countdown timer and trigger automation
   useEffect(() => {
     if (!question || !question.isActive) return;
 
@@ -161,10 +171,30 @@ export default function AutomatedQuizCard({ address, isConnected }) {
       const now = Math.floor(Date.now() / 1000);
       const remaining = Number(question.endTime) - now;
       setTimeLeft(Math.max(0, remaining));
+      
+      // Auto-trigger when time is up
+      if (remaining <= 0 && autoMode && triggerAutomation) {
+        console.log("⏰ Time's up! Auto-triggering next question...");
+        triggerAutomation();
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [question]);
+  }, [question, autoMode, triggerAutomation]);
+
+  // Auto-trigger for question progression
+  useEffect(() => {
+    if (!autoMode || !mounted) return;
+
+    const interval = setInterval(() => {
+      if (timeUntilNext && Number(timeUntilNext) === 0 && triggerAutomation) {
+        console.log("🚀 Auto-triggering next question...");
+        triggerAutomation();
+      }
+    }, 5000); // Check every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [autoMode, timeUntilNext, triggerAutomation, mounted]);
 
   // Update current question ID
   useEffect(() => {
@@ -474,6 +504,19 @@ export default function AutomatedQuizCard({ address, isConnected }) {
           </motion.button>
         )}
 
+        {/* Manual Trigger Button */}
+        {autoMode && triggerAutomation && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => triggerAutomation()}
+            className="px-4 py-3 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium transition-all"
+            title="Manually trigger next question"
+          >
+            <Zap className="w-4 h-4" />
+          </motion.button>
+        )}
+
         {hasSubmitted && !showResult && (
           <div className="flex-1 py-3 px-4 rounded-lg bg-green-600/20 text-green-400 text-center">
             <div className="flex items-center justify-center gap-2">
@@ -505,6 +548,21 @@ export default function AutomatedQuizCard({ address, isConnected }) {
           </motion.button>
         )}
       </div>
+
+      {/* Automation Status */}
+      {autoMode && (
+        <div className="mt-4 p-3 rounded-lg bg-green-600/20 border border-green-600/30">
+          <div className="flex items-center gap-2 text-green-400">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <span className="text-sm font-medium">Auto Mode: Questions every 30 seconds</span>
+          </div>
+          {timeUntilNext && Number(timeUntilNext) > 0 && (
+            <div className="text-xs text-green-300 mt-1">
+              Next question in: {Number(timeUntilNext)}s
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Result Display */}
       {showResult && (
