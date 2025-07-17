@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   useContractRead,
   useContractWrite,
@@ -149,19 +149,21 @@ export default function AutomatedQuizCard({ address, isConnected }) {
   const { write: createNextQuestion, isLoading: isCreating } =
     useContractWrite(createQuestionConfig);
 
-  // Parse question data
-  const question = questionData
-    ? {
-        id: questionData[0],
-        text: questionData[1],
-        options: questionData[2],
-        startTime: questionData[3],
-        endTime: questionData[4],
-        isActive: questionData[5],
-        isRevealed: questionData[6],
-        totalParticipants: questionData[7],
-      }
-    : null;
+  // Parse question data with useMemo to prevent unnecessary re-renders
+  const question = useMemo(() => {
+    return questionData
+      ? {
+          id: questionData[0],
+          text: questionData[1],
+          options: questionData[2],
+          startTime: questionData[3],
+          endTime: questionData[4],
+          isActive: questionData[5],
+          isRevealed: questionData[6],
+          totalParticipants: questionData[7],
+        }
+      : null;
+  }, [questionData]);
 
   // Update countdown timer and trigger automation
   useEffect(() => {

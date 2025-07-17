@@ -109,7 +109,7 @@ export default function CountdownTimer({ timeLeft }) {
         ) : (
           <div className="flex items-center space-x-2 text-gray-400">
             <AlertCircle className="w-4 h-4" />
-            <span className="text-sm font-medium">Time's up!</span>
+            <span className="text-sm font-medium">Time&apos;s up!</span>
           </div>
         )}
       </div>
