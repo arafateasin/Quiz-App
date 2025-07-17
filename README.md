@@ -1,23 +1,124 @@
-# 🎯 Automated Blockchain Quiz System
+# 🎯 zkSync Sepolia Automated Quiz App
 
-A fully automated blockchain-based quiz application where users can participate in timed quizzes and earn ERC20 tokens as rewards.
+A modern blockchain quiz application built with Next.js 14, React 18, and deployed on zkSync Sepolia testnet. Features automated quiz functionality with smart contract integration and multi-wallet support.
 
 ## ✨ Features
 
-- 🤖 **Automated Question Generation**: New questions every 30 seconds
-- 🎮 **Manual Start/Stop Control**: Start automation with a single button click
-- 🪙 **Token Rewards**: Earn QUIZ tokens for correct answers
-- 🔗 **Wallet Integration**: Connect with MetaMask and other wallets
-- 📊 **Real-time Updates**: Live question updates and participant counts
-- 🎨 **Modern UI**: Beautiful, responsive interface with animations
+- 🤖 **Automated Quiz System**: Start/stop automated quiz mode with smart contract integration
+- 🔗 **Multi-Wallet Support**: Connect with MetaMask, Coinbase Wallet, and Injected wallets
+- 🌐 **zkSync Sepolia**: Deployed on zkSync Sepolia testnet for fast, low-cost transactions
+- 📊 **Real-time Updates**: Live quiz participation and blockchain state updates
+- 🎨 **Modern UI**: Beautiful, responsive interface with Tailwind CSS
+- 🪙 **Token Integration**: Built-in ERC20 token support for quiz rewards
 
 ## 🚀 Quick Start
 
-### 1. Start the Blockchain Network
+### Prerequisites
+
+- Node.js 18+ 
+- MetaMask browser extension
+- zkSync Sepolia testnet ETH (from faucet)
+
+### 1. Clone and Install
 
 ```bash
-npm run hardhat:node
+git clone <repository-url>
+cd quiz-app
+npm install
 ```
+
+### 2. Environment Setup
+
+Create a `.env` file:
+```env
+NEXT_PUBLIC_ZKSYNC_SEPOLIA_RPC=https://sepolia.era.zksync.dev
+NEXT_PUBLIC_CHAIN_ID=300
+```
+
+### 3. Start the Application
+
+```bash
+npm run dev
+```
+
+Visit `http://localhost:3004`
+
+## 🌐 Network Configuration
+
+### zkSync Sepolia Testnet
+- **Network Name**: zkSync Sepolia Testnet
+- **RPC URL**: https://sepolia.era.zksync.dev
+- **Chain ID**: 300
+- **Currency**: ETH
+- **Block Explorer**: https://sepolia.explorer.zksync.io
+
+### Get Test ETH
+- **Faucet 1**: https://portal.zksync.io/faucet
+- **Faucet 2**: https://faucets.chain.link/
+
+## 🔧 Smart Contract Deployment
+
+### Deploy to zkSync Sepolia
+
+```bash
+npm run deploy:sepolia
+```
+
+### Verify Contract
+```bash
+npm run verify:sepolia
+```
+
+## 📁 Project Structure
+
+```
+├── components/           # React components
+│   ├── AutomatedQuizCard.js
+│   ├── SimpleConnectButton.js
+│   └── ...
+├── contracts/           # Smart contracts
+│   ├── AutomatedQuizApp.sol
+│   └── AIQuizApp.sol
+├── constants/           # Contract addresses and ABIs
+├── pages/              # Next.js pages
+├── scripts/            # Deployment and utility scripts
+├── styles/             # CSS and styling
+└── hardhat.config.js   # Hardhat configuration
+```
+
+## 🎮 Usage
+
+1. **Connect Wallet**: Click "Connect Wallet" and select your preferred wallet
+2. **Add Network**: Add zkSync Sepolia testnet to your wallet
+3. **Get Test ETH**: Use the faucets to get test ETH
+4. **Start Quiz**: Click "Start Automated Quiz" to begin the automated quiz mode
+5. **Participate**: Answer questions and earn tokens!
+
+## 🛠️ Development
+
+### Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run hardhat:compile` - Compile smart contracts
+- `npm run hardhat:node` - Start local hardhat node
+- `npm run deploy:sepolia` - Deploy to zkSync Sepolia
+- `npm run test` - Run tests
+
+### Tech Stack
+
+- **Frontend**: Next.js 14, React 18, Tailwind CSS
+- **Blockchain**: zkSync Sepolia, Hardhat, Ethers.js
+- **Wallet**: Wagmi, MetaMask, Coinbase Wallet
+- **Smart Contracts**: Solidity, OpenZeppelin
+
+## 🔐 Security
+
+- Smart contracts follow OpenZeppelin standards
+- Multi-wallet support for secure connections
+- Testnet deployment for safe testing
+- Environment variable protection
 
 ### 2. Deploy Smart Contracts
 
